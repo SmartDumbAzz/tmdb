@@ -3,6 +3,7 @@ import gzip
 import json
 from datetime import datetime, timedelta
 from flask import Flask, jsonify
+from io import BytesIO
 
 app = Flask(__name__)
 
@@ -27,16 +28,14 @@ def get_movies():
 
     # Check if the request was successful
     if response.status_code == 200:
-        # If it was, save the content to a .gz file
-        with open('movie_ids.gz', 'wb') as f:
-            f.write(response.content)
+        # If it was, save the content to a BytesIO object
+        compressed_file = BytesIO(response.content)
 
-        # Open the .gz file and extract the data
-        with gzip.open('movie_ids.gz', 'rb') as f:
-            file_content = f.read()
+        # Open the BytesIO object and extract the data
+        decompressed_file = gzip.GzipFile(fileobj=compressed_file)
 
         # Load the JSON data
-        data = json.loads(file_content)
+        data = json.loads(decompressed_file.read().decode())
 
         # Return the data as a JSON response
         return jsonify(data)
